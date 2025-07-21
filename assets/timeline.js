@@ -1,12 +1,10 @@
-// timeline.js - Control principal del Mapa Vibracional del Aura
+// timeline.js - Versión con fechas visibles y etiquetas flotantes
 
-// Cargar eventos desde el JSON
 async function loadEvents() {
   const response = await fetch('assets/events.json');
   return await response.json();
 }
 
-// Inicializar PIXI y dibujar timeline
 async function initTimeline() {
   const events = await loadEvents();
 
@@ -32,11 +30,18 @@ async function initTimeline() {
   const lineY = height / 2;
   const spacing = (width - margin * 2) / (events.length - 1);
 
+  const labelStyle = new PIXI.TextStyle({
+    fontFamily: 'Arial',
+    fontSize: 14,
+    fill: '#ffffff',
+    align: 'center'
+  });
+
   events.forEach((ev, i) => {
     const x = margin + i * spacing;
-    const y = lineY + Math.sin(i) * 80; // efecto de flotación
+    const y = lineY + Math.sin(i) * 80;
 
-    // Línea con efecto "glitch" tenue
+    // Línea con glitch suave
     const line = new PIXI.Graphics();
     line.lineStyle(2, 0x5555ff, 0.3);
     line.moveTo(x, lineY);
@@ -67,17 +72,28 @@ async function initTimeline() {
       const scale = 1 + Math.sin(Date.now() / 500 + i) * 0.05;
       aura.scale.set(scale);
     });
+
+    // Etiqueta flotante con la fecha
+    const label = new PIXI.Text(ev.fecha, labelStyle);
+    label.anchor.set(0.5, 1); // centrado sobre el nodo
+    label.x = x;
+    label.y = y - 20;
+    container.addChild(label);
   });
 }
 
-// Mostrar popup de evento
+// Popup de evento con fecha incluida
 function showPopup(event, x, y) {
   const popup = document.getElementById('eventPopup');
   popup.style.left = (x + 20) + 'px';
   popup.style.top = (y - 20) + 'px';
+
   document.getElementById('popupTitle').textContent = event.nombre;
   document.getElementById('popupSummary').textContent = event.resumen;
-  document.getElementById('popupCategory').textContent = "Categoría: " + event.categoria;
+
+  // Mostrar categoría y fecha en el popup
+  document.getElementById('popupCategory').textContent =
+    `Fecha: ${event.fecha} | Categoría: ${event.categoria}`;
 
   const linkBtn = document.getElementById('popupLink');
   if (event.enlace) {
@@ -94,5 +110,4 @@ window.addEventListener('click', (e) => {
   if (!popup.contains(e.target)) popup.style.display = 'none';
 });
 
-// Iniciar timeline al cargar
 window.addEventListener('load', initTimeline);
